@@ -2,15 +2,51 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit" Version="5.5.5" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\cdt.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\cgraph.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\config6" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\expat.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\fontconfig.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\getopt.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\glib-2.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\gobject-2.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\GraphvizWrapper.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\GraphvizWrapper.exp" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\GraphvizWrapper.lib" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\GraphvizWrapper.pdb" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\gvc.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\gvplugin_core.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\gvplugin_dot_layout.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\gvplugin_gdiplus.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\gvplugin_neato_layout.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\gvplugin_pango.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\libharfbuzz-0.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\pango-1.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\pangocairo-1.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\pangoft2-1.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\pangowin32-1.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\Pathplan.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\pixman-1.dll" Visible="false" />
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\xdot.dll" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(NuGetPackageRoot)rubjerg.graphviz\1.0.7\contentFiles\any\net48\cairo.dll" Visible="false" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="FluentArgs" Version="0.9.7" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.10.0-1.final" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.10.0-1.final" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="3.10.0-1.final" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="QuikGraph" Version="2.3.0" />
+    <PackageReference Include="QuikGraph.Serialization" Version="2.3.0" />
+    <PackageReference Include="Rubjerg.Graphviz" Version="1.0.7" />
   </ItemGroup>
-
 </Project>

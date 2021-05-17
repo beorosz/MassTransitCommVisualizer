@@ -1,12 +1,12 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using QuikGraph;
 
 namespace MassTransitCommVisualizer
 {
-    public class GraphvizDotDiagramGenerator : DiagramGeneratorBase
+    public class GraphvizDotDiagramGenerator
     {
         private static List<string> etrModulesList;
 
@@ -28,71 +28,28 @@ namespace MassTransitCommVisualizer
             etrModulesList = new List<string>();
         }
 
-        public static string Generate(Dictionary<string, string[]> producerClassSentMessagesTuples, Dictionary<string, string[]> consumerClassHandledMessagesTuples)
+        public static string Generate(IEdgeListGraph<MessageHandlerClass, TaggedEdge<MessageHandlerClass, MessageClass>> graph,
+            bool interModuleCommOnly)
         {
-            etrModulesList = ExtractModuleNames(producerClassSentMessagesTuples.Keys.Union(consumerClassHandledMessagesTuples.Keys));
-            var classListByModules = new ConcurrentDictionary<string, IList<string>>();
-            var messages = new List<(string ProducerClassName, string ConsumerClassName, string MessageClassName)>();
+            etrModulesList = CollectModuleNames(graph.Vertices);
 
-            foreach (var producerClassSentMessagesTuple in producerClassSentMessagesTuples)
-            {
-                var producerClassName = producerClassSentMessagesTuple.Key;
-                var sentMessageTypesByProducer = producerClassSentMessagesTuple.Value;
-                foreach (var sentMessageType in sentMessageTypesByProducer)
-                {
-                    var consumerClassNames = LookupMessageConsumerClasses(sentMessageType, consumerClassHandledMessagesTuples);
-                    if (consumerClassNames.Any())
-                    {
-                        var moduleName = GetModuleName(producerClassName);
-                        classListByModules.AddOrUpdate(moduleName,
-                            new List<string> { producerClassName },
-                            (key, existingValues) =>
-                            {
-                                existingValues.Add(producerClassName);
-                                return existingValues;
-                            });
-                    }
-                    foreach (var consumerClassName in consumerClassNames)
-                    {
-                        var moduleName = GetModuleName(consumerClassName);
-                        classListByModules.AddOrUpdate(moduleName,
-                            new List<string> { consumerClassName },
-                            (key, existingValues) =>
-                            {
-                                existingValues.Add(consumerClassName);
-                                return existingValues;
-                            });
-                        messages.Add((producerClassName, consumerClassName, sentMessageType));
-                    }
-                }
-            }
-
-            var umlStateDiagram = GenerateUmlStateDiagram(classListByModules, messages);
-            var graphStringRepresentation = umlStateDiagram.ToString();
-
-            return graphStringRepresentation;
-        }
-
-        private static StringBuilder GenerateUmlStateDiagram(ConcurrentDictionary<string, IList<string>> classListByModules, List<(string ProducerClassName, string ConsumerClassName, string MessageClassName)> messages)
-        {
             var umlStateDiagram = new StringBuilder();
             umlStateDiagram.AppendLine("digraph G {");
             umlStateDiagram.AppendLine("\trankdir=LR");
             umlStateDiagram.AppendLine("\tnode [shape=plaintext]");
-            umlStateDiagram.AppendLine("\tsplines=ortho");
+            //umlStateDiagram.AppendLine("\tsplines=ortho");
             umlStateDiagram.AppendLine();
 
-            int i = 1;
-            foreach (var moduleCluster in classListByModules)
+            foreach (var verticesByModules in graph.Vertices.GroupBy(vertex => vertex.ModuleName))
             {
-                umlStateDiagram.AppendLine($"\tsubgraph \"cluster_{moduleCluster.Key}\"");
+                umlStateDiagram.AppendLine($"\tsubgraph \"cluster_{verticesByModules.Key}\"");
                 umlStateDiagram.AppendLine("\t{");
-                umlStateDiagram.AppendLine($"\t\tlabel = \"{moduleCluster.Key}\"");
+                umlStateDiagram.AppendLine($"\t\tlabel = \"{verticesByModules.Key}\"");
                 umlStateDiagram.AppendLine($"\t\tcolor = blue");
                 umlStateDiagram.AppendLine($"\t\trank=\"same\"");
-                foreach (var className in moduleCluster.Value)
+                foreach (var vertex in verticesByModules)
                 {
-                    umlStateDiagram.AppendLine($"\t\t\"{className}\" [label={GetNodeHtmlRepresentation(className)}]");
+                    umlStateDiagram.AppendLine($"\t\t\"{vertex.FullClassName}\" [label={GetNodeHtmlRepresentation(vertex)}]");
                 }
 
                 umlStateDiagram.AppendLine("\t}");
@@ -100,41 +57,37 @@ namespace MassTransitCommVisualizer
 
             umlStateDiagram.AppendLine();
 
-            foreach (var msg in messages)
+            foreach (var edge in graph.Edges)
             {
-                var namespaceClassNameTuple = SplitFullClassName(msg.MessageClassName);
+                if (interModuleCommOnly && edge.Source.ModuleName == edge.Target.ModuleName)
+                {
+                    continue;
+                }
+                var namespaceClassNameTuple = SplitFullClassName(edge.Tag.FullClassName);
                 umlStateDiagram.AppendLine(
-                    $"\t\"{msg.ProducerClassName}\" -> \"{msg.ConsumerClassName}\" [label=\"{namespaceClassNameTuple.ClassName}\", fontsize=10.0]");
+                    $"\t\"{edge.Source.FullClassName}\" -> \"{edge.Target.FullClassName}\" [label=\"{namespaceClassNameTuple.ClassName}\", fontsize=10.0]");
             }
 
             umlStateDiagram.AppendLine("}");
-            return umlStateDiagram;
+
+            return umlStateDiagram.ToString();
         }
 
-        private static List<string> ExtractModuleNames(IEnumerable<string> fullClassNames)
+        private static List<string> CollectModuleNames(IEnumerable<MessageHandlerClass> messageHandlerClassCollection)
         {
             var result = new List<string>();
-            foreach (var etrFullClassName in fullClassNames)
+            foreach (var messageHandlerInformation in messageHandlerClassCollection)
             {
-                var moduleName = GetModuleName(etrFullClassName);
-                result.Add(moduleName);
+                result.Add(messageHandlerInformation.ModuleName);
             }
 
             return result.Distinct().ToList();
         }
 
-        private static string GetModuleName(string fullClassName)
+        private static string GetNodeHtmlRepresentation(MessageHandlerClass messageHandlerClass)
         {
-            var firstNamespaceParts = fullClassName.Split('.').Take(3);
-            var moduleName = string.Join(".", firstNamespaceParts);
-
-            return moduleName;
-        }
-
-        private static string GetNodeHtmlRepresentation(string fullClassName)
-        {
-            var namespaceColor = GetNamespaceColor(fullClassName);
-            var nodeName = SplitFullClassName(fullClassName);
+            var namespaceColor = GetNamespaceColor(messageHandlerClass);
+            var nodeName = SplitFullClassName(messageHandlerClass.FullClassName);
 
             return $@"<
                 <TABLE BORDER=""0"" CELLBORDER=""1"" CELLSPACING=""0"">
@@ -143,10 +96,16 @@ namespace MassTransitCommVisualizer
                 </TABLE>>";
         }
 
-        private static Color GetNamespaceColor(string fullClassName)
+        private static (string NamespaceName, string ClassName) SplitFullClassName(string fullName)
         {
-            var moduleName = GetModuleName(fullClassName);
-            var moduleIndex = etrModulesList.FindIndex(name => name == moduleName);
+            var lastDotIndex = fullName.LastIndexOf('.');
+
+            return (fullName.Substring(0, lastDotIndex), fullName.Substring(lastDotIndex + 1));
+        }
+
+        private static Color GetNamespaceColor(MessageHandlerClass messageHandlerClass)
+        {
+            var moduleIndex = etrModulesList.FindIndex(name => name == messageHandlerClass.ModuleName);
 
             return moduleIndex == -1 ? Color.Red : colorsForModules[moduleIndex % colorsForModules.Length];
         }
