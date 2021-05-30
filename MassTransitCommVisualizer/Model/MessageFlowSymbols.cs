@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
-namespace MassTransitCommVisualizer
+namespace MassTransitCommVisualizer.Model
 {
     public class MessageFlowSymbols
     {

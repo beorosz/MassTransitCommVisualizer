@@ -1,12 +1,9 @@
 ﻿using System.Collections.Generic;
 
-namespace MassTransitCommVisualizer
+namespace MassTransitCommVisualizer.Model
 {
     public class MessageFlowInformation
     {
-        private static IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> Empty => 
-            new Dictionary<MessageHandlerClass, IEnumerable<MessageClass>>();
-
         public IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> MessagePublisherInfoCollection { get; }
         public IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> MessageResponderInfoCollection { get; }
         public IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> MessageSenderInfoCollection { get; }

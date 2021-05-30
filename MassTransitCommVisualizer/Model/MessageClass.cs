@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
-namespace MassTransitCommVisualizer
+namespace MassTransitCommVisualizer.Model
 {
     [Serializable]
-    public class MessageClass
+    [DebuggerDisplay("{FullClassName}")]
+    public class MessageClass : IEquatable<MessageClass>
     {
         public string FullClassName { get; }
 
@@ -28,6 +30,26 @@ namespace MassTransitCommVisualizer
             {
                 return (obj.FullClassName != null ? obj.FullClassName.GetHashCode() : 0);
             }
+        }
+
+        public bool Equals(MessageClass other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return FullClassName == other.FullClassName;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MessageClass) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return (FullClassName != null ? FullClassName.GetHashCode() : 0);
         }
     }
 }

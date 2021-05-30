@@ -44,6 +44,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.10.0-1.final" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.10.0-1.final" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="3.10.0-1.final" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="QuikGraph" Version="2.3.0" />
     <PackageReference Include="QuikGraph.Serialization" Version="2.3.0" />

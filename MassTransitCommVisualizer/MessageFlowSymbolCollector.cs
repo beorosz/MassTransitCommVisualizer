@@ -2,15 +2,28 @@
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
+using MassTransitCommVisualizer.Model;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace MassTransitCommVisualizer
 {
-    public class MessageDataFlowCollector
+    public interface IMessageFlowSymbolCollector
     {
-        public static async Task<MessageFlowSymbols> Generate(string solutionFilePath)
+        Task<MessageFlowSymbols> Collect(string solutionFilePath);
+    }
+
+    public class MessageFlowSymbolCollector : IMessageFlowSymbolCollector
+    {
+        private readonly ISymbolFinder symbolFinder;
+
+        public MessageFlowSymbolCollector(ISymbolFinder symbolFinder)
+        {
+            this.symbolFinder = symbolFinder;
+        }
+
+        public async Task<MessageFlowSymbols> Collect(string solutionFilePath)
         {
             Console.WriteLine("Looking for Visual Studio instance with major version 16 (VS2019)...");
             var visualStudioInstances = MSBuildLocator.QueryVisualStudioInstances().ToArray();
@@ -27,31 +40,31 @@ namespace MassTransitCommVisualizer
             var projectCompilations = solution.Projects.Select(project => project.GetCompilationAsync().Result).ToImmutableHashSet();
 
             Console.WriteLine("Finding all message producers and consumers in solution...");
-            var consumerInterfaceSymbol = SymbolFinder.GetTypeSymbol(projectCompilations, "MassTransit.IConsumer`1");
-            var consumerImplementationSymbols = await SymbolFinder.FindNamedTypeSymbolImplementations(solution, consumerInterfaceSymbol);
+            var consumerInterfaceSymbol = symbolFinder.GetTypeSymbol(projectCompilations, "MassTransit.IConsumer`1");
+            var consumerImplementationSymbols = await symbolFinder.FindNamedTypeSymbolImplementations(solution, consumerInterfaceSymbol);
 
-            var getResponseMethodSymbols = SymbolFinder.GetMethodSymbols(projectCompilations,
+            var getResponseMethodSymbols = symbolFinder.GetMethodSymbols(projectCompilations,
                 "ETR.Backend.Common.Infrastructure.MassTransit.Extensions.ControllerRequestClientExtensions", "GetResponse", 2);
-            var responseReceiverSymbols = await SymbolFinder.FindMethodCallers(solution, getResponseMethodSymbols, 2, 2);
-            var responseSenderSymbols = await SymbolFinder.FindMethodCallers(solution, getResponseMethodSymbols, 2, 1);
+            var responseReceiverSymbols = await symbolFinder.FindMethodCallers(solution, getResponseMethodSymbols, 2, 2);
+            var responseSenderSymbols = await symbolFinder.FindMethodCallers(solution, getResponseMethodSymbols, 2, 1);
 
-            var publishMethodSymbols = SymbolFinder.GetMethodSymbols(projectCompilations,
+            var publishMethodSymbols = symbolFinder.GetMethodSymbols(projectCompilations,
                 "MassTransit.IPublishEndpoint", "Publish", 1, 2);
-            var messagePublisherSymbols = await SymbolFinder.FindMethodCallers(solution, publishMethodSymbols, 1, 1);
+            var messagePublisherSymbols = await symbolFinder.FindMethodCallers(solution, publishMethodSymbols, 1, 1);
 
-            var sendMethodSymbols = SymbolFinder.GetMethodSymbols(projectCompilations,
+            var sendMethodSymbols = symbolFinder.GetMethodSymbols(projectCompilations,
                 "MassTransit.EndpointConventionExtensions", "Send", 1, 3);
-            var messageSenderSymbols = await SymbolFinder.FindMethodCallers(solution, sendMethodSymbols, 1, 1);
+            var messageSenderSymbols = await symbolFinder.FindMethodCallers(solution, sendMethodSymbols, 1, 1);
 
-            var respondAsyncSymbols = SymbolFinder.GetMethodSymbols(projectCompilations,
+            var respondAsyncSymbols = symbolFinder.GetMethodSymbols(projectCompilations,
                 "MassTransit.ConsumeContext", "RespondAsync", 1, 1);
-            var messageResponderSymbols = await SymbolFinder.FindMethodCallers(solution, respondAsyncSymbols, 1, 1);
+            var messageResponderSymbols = await symbolFinder.FindMethodCallers(solution, respondAsyncSymbols, 1, 1);
 
             return new MessageFlowSymbols(messagePublisherSymbols, messageResponderSymbols, messageSenderSymbols, 
                 responseSenderSymbols, consumerImplementationSymbols, responseReceiverSymbols);
         }
 
-        private static void Workspace_WorkspaceFailed(object sender, WorkspaceDiagnosticEventArgs e)
+        private void Workspace_WorkspaceFailed(object sender, WorkspaceDiagnosticEventArgs e)
         {
             Console.WriteLine($"[{e.Diagnostic.Kind}] {e.Diagnostic.Message}");
         }

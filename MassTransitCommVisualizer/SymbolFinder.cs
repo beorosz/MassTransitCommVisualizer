@@ -6,10 +6,25 @@ using Microsoft.CodeAnalysis;
 
 namespace MassTransitCommVisualizer
 {
-    public static class SymbolFinder
+    public interface ISymbolFinder
     {
-        public static ImmutableArray<IMethodSymbol> GetMethodSymbols(ImmutableHashSet<Compilation> projectCompilations, 
-            string typeName, string methodName, byte methodArity = default, byte methodParameterCount = default)
+        ImmutableArray<IMethodSymbol> GetMethodSymbols(ImmutableHashSet<Compilation> projectCompilations,
+            string typeName, string methodName, byte methodArity = default, byte methodParameterCount = default);
+        
+        INamedTypeSymbol GetTypeSymbol(ImmutableHashSet<Compilation> projectCompilations, string typeName);
+
+        Task<Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>>> FindMethodCallers
+        (Solution solution, ImmutableArray<IMethodSymbol> methodSymbols, byte methodParameterCount,
+            byte orderOfTypeArgumentToRetrieve);
+
+        Task<Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>>> FindNamedTypeSymbolImplementations
+            (Solution solution, INamedTypeSymbol interfaceTypeSymbol);
+    }
+
+    public class SymbolFinder : ISymbolFinder
+    {
+        public ImmutableArray<IMethodSymbol> GetMethodSymbols(ImmutableHashSet<Compilation> projectCompilations, 
+            string typeName, string methodName, byte methodArity, byte methodParameterCount)
         {
             foreach (var compilation in projectCompilations)
             {
@@ -29,7 +44,7 @@ namespace MassTransitCommVisualizer
             return ImmutableArray<IMethodSymbol>.Empty;
         }
 
-        public static INamedTypeSymbol GetTypeSymbol(ImmutableHashSet<Compilation> projectCompilations, string typeName)
+        public INamedTypeSymbol GetTypeSymbol(ImmutableHashSet<Compilation> projectCompilations, string typeName)
         {
             foreach (var compilation in projectCompilations)
             {
@@ -45,7 +60,7 @@ namespace MassTransitCommVisualizer
             return null;
         }
 
-        public static async Task<Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>>> FindMethodCallers
+        public async Task<Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>>> FindMethodCallers
             (Solution solution, ImmutableArray<IMethodSymbol> methodSymbols, byte methodParameterCount, byte orderOfTypeArgumentToRetrieve)
         {
             var methodCallerTypeWithMethodParamTypesTuples = new Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>>();
@@ -77,7 +92,7 @@ namespace MassTransitCommVisualizer
             return methodCallerTypeWithMethodParamTypesTuples;
         }
 
-        public static async Task<Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>>> FindNamedTypeSymbolImplementations
+        public async Task<Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>>> FindNamedTypeSymbolImplementations
             (Solution solution, INamedTypeSymbol interfaceTypeSymbol)
         {
             var typeImplementorWithPayloadTypesTuples = new Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>>();
@@ -101,7 +116,7 @@ namespace MassTransitCommVisualizer
             return typeImplementorWithPayloadTypesTuples;
         }
 
-        private static IEnumerable<ITypeSymbol> GetValueOrDefault(Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> dict, INamedTypeSymbol key)
+        private IEnumerable<ITypeSymbol> GetValueOrDefault(Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> dict, INamedTypeSymbol key)
         {
             if (dict.TryGetValue(key, out var result))
             {

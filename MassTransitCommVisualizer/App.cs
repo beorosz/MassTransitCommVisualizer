@@ -1,26 +1,45 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
+using MassTransitCommVisualizer.Model;
 using QuikGraph;
 using QuikGraph.Serialization;
 using Rubjerg.Graphviz;
 
 namespace MassTransitCommVisualizer
 {
-    public class App
+    public interface IApp
     {
-        public static async Task Run(string solutionFilePath, string inputDataFile, string outputFilePath, bool interModuleCommOnly)
+        Task Run(string solutionFilePath, string inputDataFile, string outputFilePath,
+            string startingProducer);
+    }
+
+    public class App : IApp
+    {
+        private readonly IGraphvizDotDiagramGenerator graphvizDotDiagramGenerator;
+        private readonly IMessageFlowSymbolCollector messageFlowSymbolCollector;
+        private readonly IMessageFlowSymbolConverter messageFlowSymbolConverter;
+
+        public App(IGraphvizDotDiagramGenerator graphvizDotDiagramGenerator, IMessageFlowSymbolCollector messageFlowSymbolCollector,
+            IMessageFlowSymbolConverter messageFlowSymbolConverter)
+        {
+            this.graphvizDotDiagramGenerator = graphvizDotDiagramGenerator;
+            this.messageFlowSymbolCollector = messageFlowSymbolCollector;
+            this.messageFlowSymbolConverter = messageFlowSymbolConverter;
+        }
+
+        public async Task Run(string solutionFilePath, string inputDataFile, string outputFilePath, 
+            string startingProducer)
         {
             try
             {
                 AdjacencyGraph<MessageHandlerClass, TaggedEdge<MessageHandlerClass, MessageClass>> messageFlowGraph;
 
-                if (solutionFilePath.Any())
+                if (!string.IsNullOrEmpty(solutionFilePath))
                 {
-                    var messageFlowSymbols = await MessageDataFlowCollector.Generate(solutionFilePath);
+                    var messageFlowSymbols = await messageFlowSymbolCollector.Collect(solutionFilePath);
 
-                    messageFlowGraph = MessageFlowSymbolConverter.ConvertToGraph(messageFlowSymbols);
+                    messageFlowGraph = messageFlowSymbolConverter.ConvertToGraph(messageFlowSymbols);
                     using (var stream = File.Open(inputDataFile, FileMode.Create))
                     {
                         messageFlowGraph.SerializeToBinary(stream);
@@ -36,7 +55,9 @@ namespace MassTransitCommVisualizer
                 }
 
                 Console.WriteLine("Generating diagram....");
-                string graphRepresentation = GraphvizDotDiagramGenerator.Generate(messageFlowGraph, interModuleCommOnly);
+                string graphRepresentation = string.IsNullOrEmpty(startingProducer) ?
+                    graphvizDotDiagramGenerator.Generate(messageFlowGraph) :
+                    graphvizDotDiagramGenerator.GenerateFromProducer(messageFlowGraph, startingProducer);
                 
                 Console.WriteLine("Writing diagram to output SVG file....");
                 var graph = RootGraph.FromDotString(graphRepresentation);
