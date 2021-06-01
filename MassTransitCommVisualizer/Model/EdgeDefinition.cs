@@ -4,11 +4,11 @@ namespace MassTransitCommVisualizer.Model
 {
     public class EdgeDefinition : IEquatable<EdgeDefinition>
     {
-        public MessageHandlerClass Source { get; }
-        public MessageHandlerClass Target { get; }
-        public MessageClass Edge { get; }
+        public MessageHandlerDefinition Source { get; }
+        public MessageHandlerDefinition Target { get; }
+        public MessageDefinition Edge { get; }
 
-        public EdgeDefinition(MessageHandlerClass source, MessageHandlerClass target, MessageClass edge)
+        public EdgeDefinition(MessageHandlerDefinition source, MessageHandlerDefinition target, MessageDefinition edge)
         {
             Source = source;
             Target = target;

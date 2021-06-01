@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
 using MassTransitCommVisualizer.Model;
 using Microsoft.CodeAnalysis;
 using QuikGraph;
@@ -8,25 +9,23 @@ namespace MassTransitCommVisualizer
 {
     public interface IMessageFlowSymbolConverter
     {
-        AdjacencyGraph<MessageHandlerClass, TaggedEdge<MessageHandlerClass, MessageClass>> ConvertToGraph(
-            MessageFlowSymbols messageFlowSymbols);
+        MessageFlowGraph ConvertToGraph(MessageFlowSymbols messageFlowSymbols);
     }
 
     public class MessageFlowSymbolConverter : IMessageFlowSymbolConverter
     {
-        private readonly MessageClass.MessageClassComparer MessageClassComparer;
+        private readonly MessageDefinition.MessageClassComparer MessageClassComparer;
 
         public MessageFlowSymbolConverter()
         {
-            MessageClassComparer = new MessageClass.MessageClassComparer();
+            MessageClassComparer = new MessageDefinition.MessageClassComparer();
         }
 
-        public AdjacencyGraph<MessageHandlerClass, TaggedEdge<MessageHandlerClass, MessageClass>>
-            ConvertToGraph(MessageFlowSymbols messageFlowSymbols)
+        public MessageFlowGraph ConvertToGraph(MessageFlowSymbols messageFlowSymbols)
         {
-            var graph = new AdjacencyGraph<MessageHandlerClass, TaggedEdge<MessageHandlerClass, MessageClass>>(false);
+            var graph = new MessageFlowGraph(false);
 
-            var messageFlowInformation = Convert(messageFlowSymbols);
+            var messageFlowInformation = Map(messageFlowSymbols);
             var producerClassSentMessagesTuples = MergeDictionaries(
                     new[]
                     {
@@ -50,7 +49,7 @@ namespace MassTransitCommVisualizer
             // Those classes must be the same instance in the graph, so we use the handler collection below to pick the right class
             var allMessageHandlers = producerClassSentMessagesTuples.Keys
                 .Union(consumerClassHandledMessagesTuples.Keys)
-                .Distinct(new MessageHandlerClass.MessageHandlerClassComparer())
+                .Distinct(new MessageHandlerDefinition.MessageHandlerClassComparer())
                 .ToArray();
             
             foreach (var producerClassSentMessagesTuple in producerClassSentMessagesTuples)
@@ -66,7 +65,7 @@ namespace MassTransitCommVisualizer
                     {
                         var consumerClassInstance = allMessageHandlers.First(handler => handler.Equals(consumerClass));
                         graph.AddVerticesAndEdge(
-                            new TaggedEdge<MessageHandlerClass, MessageClass>(producerClassInstance, consumerClassInstance, sentMessageType));
+                            new TaggedEdge<MessageHandlerDefinition, MessageDefinition>(producerClassInstance, consumerClassInstance, sentMessageType));
                     }
                 }
             }
@@ -74,7 +73,7 @@ namespace MassTransitCommVisualizer
             return graph;
         }
 
-        private MessageFlowInformation Convert(MessageFlowSymbols messageFlowSymbols)
+        private MessageFlowInformation Map(MessageFlowSymbols messageFlowSymbols)
         {
             var messagePublisherInfoCollection = ExtractInformationFromSymbols(messageFlowSymbols.MessagePublisherSymbolCollection);
             var messageResponderSymbolCollection = ExtractInformationFromSymbols(messageFlowSymbols.MessageResponderSymbolCollection);
@@ -108,39 +107,40 @@ namespace MassTransitCommVisualizer
             return result;
         }
 
-        private IEnumerable<MessageHandlerClass> LookupMessageConsumerClasses(
-            MessageClass message,
-            IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> consumersWithMessages)
+        private IEnumerable<MessageHandlerDefinition> LookupMessageConsumerClasses(
+            MessageDefinition message,
+            IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> consumersWithMessages)
         {
             return consumersWithMessages
                 .Where(keyValue => keyValue.Value.Any(msg => MessageClassComparer.Equals(msg, message)))
                 .Select(keyValue => keyValue.Key)
-                .Distinct(new MessageHandlerClass.MessageHandlerClassComparer())
+                .Distinct(new MessageHandlerDefinition.MessageHandlerClassComparer())
                 .ToArray();
         }
 
 
 
-        private Dictionary<MessageHandlerClass, IEnumerable<MessageClass>>
+        private Dictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>>
             ExtractInformationFromSymbols(IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> dictionary)
         {
             return dictionary
-                .ToDictionary(keyValue => ConvertToMessageHandlerInformation(keyValue.Key), keyValue =>
-                    keyValue.Value.Select(ConvertToMessageInformation));
+                .ToDictionary(keyValue => MapToMessageHandlerDefinition(keyValue.Key), keyValue =>
+                    keyValue.Value.Select(ConvertToMessageDefinition));
 
         }
 
-        private MessageClass ConvertToMessageInformation(ITypeSymbol messageTypeSymbol)
+        private MessageDefinition ConvertToMessageDefinition(ITypeSymbol messageTypeSymbol)
         {
-            return new MessageClass(messageTypeSymbol.ToDisplayString());
+            return new MessageDefinition(messageTypeSymbol.ToDisplayString());
         }
 
-        private MessageHandlerClass ConvertToMessageHandlerInformation(INamedTypeSymbol messageHandlerTypeSymbol)
+        private MessageHandlerDefinition MapToMessageHandlerDefinition(INamedTypeSymbol messageHandlerTypeSymbol)
         {
             var fullClassName = messageHandlerTypeSymbol.ToDisplayString();
             var moduleName = GetModuleName(fullClassName);
+            var comment = ExtractComment(messageHandlerTypeSymbol.GetDocumentationCommentXml());
 
-            return new MessageHandlerClass(fullClassName, moduleName);
+            return new MessageHandlerDefinition(fullClassName, moduleName, comment);
         }
 
         private string GetModuleName(string fullClassName)
@@ -149,6 +149,21 @@ namespace MassTransitCommVisualizer
             var moduleName = string.Join(".", firstNamespaceParts);
 
             return moduleName;
+        }
+
+        private string ExtractComment(string rawXmlComment)
+        {
+            if (string.IsNullOrEmpty(rawXmlComment))
+            {
+                return string.Empty;
+            }
+
+            var xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml(rawXmlComment);
+
+            var summaryNode = xmlDocument.SelectSingleNode("member/summary");
+
+            return summaryNode?.InnerText.Trim();
         }
     }
 }

@@ -58,6 +58,7 @@ namespace MassTransitCommVisualizer
             serviceCollection.AddSingleton<ISymbolFinder, SymbolFinder>();
             serviceCollection.AddSingleton<IMessageFlowSymbolCollector, MessageFlowSymbolCollector>();
             serviceCollection.AddSingleton<IMessageFlowSymbolConverter, MessageFlowSymbolConverter>();
+            serviceCollection.AddSingleton<IGraphWalkerAlgorithms, GraphWalkerAlgorithms>();
             serviceCollection.AddSingleton<IGraphvizDotDiagramGenerator, GraphvizDotDiagramGenerator>();
 
             serviceProvider = serviceCollection.BuildServiceProvider();

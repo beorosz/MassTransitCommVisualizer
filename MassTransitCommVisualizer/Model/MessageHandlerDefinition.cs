@@ -6,19 +6,22 @@ namespace MassTransitCommVisualizer.Model
 {
     [Serializable]
     [DebuggerDisplay("{FullClassName}")]
-    public class MessageHandlerClass : IEquatable<MessageHandlerClass>
+    public class MessageHandlerDefinition : IEquatable<MessageHandlerDefinition>
     {
         public string FullClassName { get; }
         public string ModuleName { get; }
 
-        public MessageHandlerClass(string fullClassName, string moduleName)
+        public string Comment { get; set; }
+
+        public MessageHandlerDefinition(string fullClassName, string moduleName, string comment)
         {
             FullClassName = fullClassName;
             ModuleName = moduleName;
+            Comment = comment;
         }
-        public class MessageHandlerClassComparer : IEqualityComparer<MessageHandlerClass>
+        public class MessageHandlerClassComparer : IEqualityComparer<MessageHandlerDefinition>
         {
-            public bool Equals(MessageHandlerClass x, MessageHandlerClass y)
+            public bool Equals(MessageHandlerDefinition x, MessageHandlerDefinition y)
             {
                 if (ReferenceEquals(x, y)) return true;
                 if (ReferenceEquals(x, null)) return false;
@@ -27,13 +30,13 @@ namespace MassTransitCommVisualizer.Model
                 return x.FullClassName == y.FullClassName;
             }
 
-            public int GetHashCode(MessageHandlerClass obj)
+            public int GetHashCode(MessageHandlerDefinition obj)
             {
                 return (obj.FullClassName != null ? obj.FullClassName.GetHashCode() : 0);
             }
         }
 
-        public bool Equals(MessageHandlerClass other)
+        public bool Equals(MessageHandlerDefinition other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -45,7 +48,7 @@ namespace MassTransitCommVisualizer.Model
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((MessageHandlerClass) obj);
+            return Equals((MessageHandlerDefinition) obj);
         }
 
         public override int GetHashCode()

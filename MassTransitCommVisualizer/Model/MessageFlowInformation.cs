@@ -4,21 +4,21 @@ namespace MassTransitCommVisualizer.Model
 {
     public class MessageFlowInformation
     {
-        public IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> MessagePublisherInfoCollection { get; }
-        public IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> MessageResponderInfoCollection { get; }
-        public IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> MessageSenderInfoCollection { get; }
-        public IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> ResponseSenderInfoCollection { get; }
+        public IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> MessagePublisherInfoCollection { get; }
+        public IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> MessageResponderInfoCollection { get; }
+        public IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> MessageSenderInfoCollection { get; }
+        public IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> ResponseSenderInfoCollection { get; }
 
-        public IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> ConsumerImplementationInfoCollection { get; }
-        public IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> ResponseReceiverInfoCollection { get; }
+        public IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> ConsumerImplementationInfoCollection { get; }
+        public IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> ResponseReceiverInfoCollection { get; }
 
         public MessageFlowInformation(
-            IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> messagePublisherInfoCollection, 
-            IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> messageResponderInfoCollection, 
-            IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> messageSenderInfoCollection, 
-            IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> responseSenderInfoCollection, 
-            IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> consumerImplementationInfoCollection, 
-            IDictionary<MessageHandlerClass, IEnumerable<MessageClass>> responseReceiverInfoCollection)
+            IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> messagePublisherInfoCollection, 
+            IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> messageResponderInfoCollection, 
+            IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> messageSenderInfoCollection, 
+            IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> responseSenderInfoCollection, 
+            IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> consumerImplementationInfoCollection, 
+            IDictionary<MessageHandlerDefinition, IEnumerable<MessageDefinition>> responseReceiverInfoCollection)
         {
             MessagePublisherInfoCollection = messagePublisherInfoCollection;
             MessageResponderInfoCollection = messageResponderInfoCollection;

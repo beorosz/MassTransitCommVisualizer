@@ -6,18 +6,18 @@ namespace MassTransitCommVisualizer.Model
 {
     [Serializable]
     [DebuggerDisplay("{FullClassName}")]
-    public class MessageClass : IEquatable<MessageClass>
+    public class MessageDefinition : IEquatable<MessageDefinition>
     {
         public string FullClassName { get; }
 
-        public MessageClass(string fullClassName)
+        public MessageDefinition(string fullClassName)
         {
             FullClassName = fullClassName;
         }
 
-        public class MessageClassComparer : IEqualityComparer<MessageClass>
+        public class MessageClassComparer : IEqualityComparer<MessageDefinition>
         {
-            public bool Equals(MessageClass x, MessageClass y)
+            public bool Equals(MessageDefinition x, MessageDefinition y)
             {
                 if (ReferenceEquals(x, y)) return true;
                 if (ReferenceEquals(x, null)) return false;
@@ -26,13 +26,13 @@ namespace MassTransitCommVisualizer.Model
                 return x.FullClassName == y.FullClassName;
             }
 
-            public int GetHashCode(MessageClass obj)
+            public int GetHashCode(MessageDefinition obj)
             {
                 return (obj.FullClassName != null ? obj.FullClassName.GetHashCode() : 0);
             }
         }
 
-        public bool Equals(MessageClass other)
+        public bool Equals(MessageDefinition other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -44,7 +44,7 @@ namespace MassTransitCommVisualizer.Model
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((MessageClass) obj);
+            return Equals((MessageDefinition) obj);
         }
 
         public override int GetHashCode()
