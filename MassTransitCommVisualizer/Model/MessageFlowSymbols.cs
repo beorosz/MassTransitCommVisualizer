@@ -5,28 +5,15 @@ namespace MassTransitCommVisualizer.Model
 {
     public class MessageFlowSymbols
     {
-        public IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> MessagePublisherSymbolCollection { get; }
-        public IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> MessageResponderSymbolCollection { get; }
-        public IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> MessageSenderSymbolCollection { get; }
-        public IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> ResponseSenderSymbolCollection { get; }
-
-        public IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> ConsumerImplementationSymbolCollection { get; }
-        public IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> ResponseReceiverSymbolCollection { get; }
+        public IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> MessageProducerSymbolCollection { get; }
+        public IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> MessageConsumerSymbolCollection { get; }
 
         public MessageFlowSymbols(
-            IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> messagePublisherSymbolCollection, 
-            IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> messageResponderSymbolCollection, 
-            IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> messageSenderSymbolCollection, 
-            IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> responseSenderSymbolCollection, 
-            IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> consumerImplementationSymbolCollection, 
-            IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> responseReceiverSymbolCollection)
+            IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> messageProducerSymbolCollection, 
+            IDictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>> messageConsumerSymbolCollection)
         {
-            MessagePublisherSymbolCollection = messagePublisherSymbolCollection;
-            MessageResponderSymbolCollection = messageResponderSymbolCollection;
-            MessageSenderSymbolCollection = messageSenderSymbolCollection;
-            ResponseSenderSymbolCollection = responseSenderSymbolCollection;
-            ConsumerImplementationSymbolCollection = consumerImplementationSymbolCollection;
-            ResponseReceiverSymbolCollection = responseReceiverSymbolCollection;
+            MessageProducerSymbolCollection = messageProducerSymbolCollection;
+            MessageConsumerSymbolCollection = messageConsumerSymbolCollection;
         }
     }
 }

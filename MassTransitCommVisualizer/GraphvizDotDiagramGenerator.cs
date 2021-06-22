@@ -3,7 +3,6 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using MassTransitCommVisualizer.Model;
-using QuikGraph;
 
 namespace MassTransitCommVisualizer
 {
@@ -49,7 +48,7 @@ namespace MassTransitCommVisualizer
             {
                 var namespaceClassNameTuple = SplitFullClassName(edge.Tag.FullClassName);
                 dotDiagram.AppendLine(
-                    $"\t\"{edge.Source.FullClassName}\" -> \"{edge.Target.FullClassName}\" [label=\"{namespaceClassNameTuple.ClassName}\", fontsize=10.0]");
+                    $"\t\"{edge.Source.FullClassName}\" -> \"{edge.Target.FullClassName}\" [label=\"{namespaceClassNameTuple.ClassName}\"{GetLabelTooltip(edge.Tag.Comment)}, fontsize=10.0]");
             }
 
             AppendMainGraphDefinitionEnd(dotDiagram);
@@ -76,6 +75,11 @@ namespace MassTransitCommVisualizer
         private string GetTooltip(string comment)
         {
             return string.IsNullOrEmpty(comment) ? "" : $" tooltip=\"{comment}\"";
+        }
+
+        private string GetLabelTooltip(string comment)
+        {
+            return string.IsNullOrEmpty(comment) ? "" : $" labeltooltip=\"{comment}\"";
         }
 
         private void AppendSubgraphDefinitionEnd(StringBuilder dotDiagram)

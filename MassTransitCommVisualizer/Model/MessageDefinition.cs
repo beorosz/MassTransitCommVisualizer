@@ -10,9 +10,12 @@ namespace MassTransitCommVisualizer.Model
     {
         public string FullClassName { get; }
 
-        public MessageDefinition(string fullClassName)
+        public string Comment { get; }
+
+        public MessageDefinition(string fullClassName, string comment)
         {
             FullClassName = fullClassName;
+            Comment = comment;
         }
 
         public class MessageClassComparer : IEqualityComparer<MessageDefinition>

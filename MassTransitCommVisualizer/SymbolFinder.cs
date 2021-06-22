@@ -67,11 +67,20 @@ namespace MassTransitCommVisualizer
 
             foreach (var methodSymbol in methodSymbols)
             {
+                var processedLocations = new List<Location>();
                 var methodCallers = await Microsoft.CodeAnalysis.FindSymbols.SymbolFinder.FindCallersAsync(methodSymbol, solution);
                 foreach (var directMethodCaller in methodCallers.Where(callerInfo => callerInfo.IsDirect))
                 {
                     foreach (var location in directMethodCaller.Locations)
                     {
+                        // Projects with multiple target frameworks appear multiple times in the solution
+                        // Therefore the method symbol is found multiple times, but at the same location
+                        // Such excessive calls must be filtered out
+                        if (processedLocations.Any(procLoc => 
+                            procLoc.SourceTree.FilePath == location.SourceTree.FilePath && procLoc.SourceSpan == location.SourceSpan))
+                        {
+                            continue;
+                        }
                         if (location.IsInSource)
                         {
                             var methodCallerSemanticModel = await solution.GetDocument(location.SourceTree).GetSemanticModelAsync();
@@ -84,6 +93,7 @@ namespace MassTransitCommVisualizer
                                 methodCallerTypeWithMethodParamTypesTuples[directMethodCaller.CallingSymbol.ContainingType] =
                                     messagePayloadType.Union(GetValueOrDefault(methodCallerTypeWithMethodParamTypesTuples, directMethodCaller.CallingSymbol.ContainingType)).ToArray();
                             }
+                            processedLocations.Add(location);
                         }
                     }
                 }
@@ -125,6 +135,5 @@ namespace MassTransitCommVisualizer
 
             return new List<ITypeSymbol>();
         }
-
     }
 }

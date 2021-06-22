@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using FluentArgs;
+using FluentArgs.Help;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MassTransitCommVisualizer
@@ -13,39 +14,48 @@ namespace MassTransitCommVisualizer
         {
             ConfigureServices();
 
+            var inputDataFileDefaultValue = "messageflowdata.dat";
+            var app = serviceProvider.GetService<IApp>();
+            if (app == null)
+            {
+                throw new ApplicationException("App not found in service provider!");
+            }
+
+
             return FluentArgsBuilder.New()
                 .DefaultConfigsWithAppDescription(
-                    "This application opens the given VS solution file, analyzes its message communication and outputs it in an SVG file.")
-                // Parameter "solution": if defined, app opens and compiles the given VS solution
-                // and retrieves the messages, the message senders and producers
+                    "The application opens the given VS solution file, " +
+                    "analyzes its message flow and can either output process entry information to console or the given flow fragment into an SVG file.")
+                .RegisterHelpPrinter(new SimpleHelpPrinter(Console.Error))
+
                 .Parameter<string>("-s", "--solution")
-                .WithDescription("VS solution file name with path for analysis")
+                .WithDescription("VS solution file name with path for analysis. If defined, the solution will be compiled, message flow information is generated and saved into an input file.")
                 .WithExamples("path\\to\\solution\\file.sln")
                 .IsOptional()
 
-                .Parameter<string>("-idf", "--inputdatafile")
-                .WithDescription("Data file name with path to use for diagram generation (VS solution not compiled)")
+                .Parameter<string>("-idf", "--input-data-file")
+                .WithDescription("Data file name with path to use for diagram generation.")
                 .WithExamples("path\\to\\visualizer\\data\\file")
-                .IsOptionalWithDefault("messageflowdata.dat")
+                .IsOptionalWithDefault(inputDataFileDefaultValue)
 
-                .Parameter<string>("-so", "--svgoutput")
-                .WithDescription("output SVG file name with path")
+                .Parameter<string>("-o", "--output")
+                .WithDescription("Output SVG file name with path.")
                 .WithExamples("path\\to\\output\\file.svg")
-                .IsRequired()
+                .IsOptional()
 
                 .Parameter<string>("-sp", "--starting-producer")
-                .WithDescription("starts walking the graph from this point and follow out edges only")
-                .WithExamples("-sp ETR.Backend.JET.UiCommandConsumers.Resource.ProcessResourcesChanges.ProcessResourcesChangesConsumer")
+                .WithDescription("Starts walking the message flow graph from the given producer and follows out edges only.")
+                .WithExamples("ETR.Backend.JET.UiCommandConsumers.Resource.ProcessResourcesChanges.ProcessResourcesChangesConsumer")
                 .IsOptional()
-                .Call(startingProducer => svgOutputFilePath => inputDataFilePath => async solutionFilePath =>
-                {
-                    var app = serviceProvider.GetService<IApp>();
-                    if (app == null)
-                    {
-                        throw new ApplicationException("App not found in service provider!");
-                    }
 
-                    await app.Run(solutionFilePath, inputDataFilePath, svgOutputFilePath, startingProducer);
+                
+                .Flag("-lbep", "--list-business-entry-points")
+                .WithDescription("List all defined business process entry points, " +
+                                 "defined in message handlers' XML comments (businessProcessEntryPointDescription). They can be used as starting producers.")
+                
+                .Call(listEntryPoints => startingProducer => svgOutputFilePath => inputDataFilePath => async solutionFilePath =>
+                {
+                    await app.Run(solutionFilePath, inputDataFilePath, svgOutputFilePath, startingProducer, listEntryPoints);
                 })
                 .ParseAsync(args);
         }

@@ -11,13 +11,16 @@ namespace MassTransitCommVisualizer.Model
         public string FullClassName { get; }
         public string ModuleName { get; }
 
-        public string Comment { get; set; }
+        public string Comment { get; }
 
-        public MessageHandlerDefinition(string fullClassName, string moduleName, string comment)
+        public string BusinessProcessEntryPointDescription { get; }
+
+        public MessageHandlerDefinition(string fullClassName, string moduleName, string comment, string businessProcessEntryPointDescription)
         {
             FullClassName = fullClassName;
             ModuleName = moduleName;
             Comment = comment;
+            BusinessProcessEntryPointDescription = businessProcessEntryPointDescription;
         }
         public class MessageHandlerClassComparer : IEqualityComparer<MessageHandlerDefinition>
         {

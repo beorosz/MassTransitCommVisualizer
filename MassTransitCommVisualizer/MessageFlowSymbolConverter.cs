@@ -26,33 +26,16 @@ namespace MassTransitCommVisualizer
             var graph = new MessageFlowGraph(false);
 
             var messageFlowInformation = Map(messageFlowSymbols);
-            var producerClassSentMessagesTuples = MergeDictionaries(
-                    new[]
-                    {
-                        messageFlowInformation.MessagePublisherInfoCollection,
-                        messageFlowInformation.MessageResponderInfoCollection,
-                        messageFlowInformation.MessageSenderInfoCollection,
-                        messageFlowInformation.ResponseSenderInfoCollection
-                    })
-                .ToDictionary(x => x.Key, x => x.Value);
-
-            var consumerClassHandledMessagesTuples = MergeDictionaries(
-                    new[]
-                    {
-                        messageFlowInformation.ConsumerImplementationInfoCollection,
-                        messageFlowInformation.ResponseReceiverInfoCollection
-                    })
-                .ToDictionary(x => x.Key, x => x.Value);
-
+            
             // We have multiple handler class instances with the same class and module name
             // due to separated producer and consumer collection
             // Those classes must be the same instance in the graph, so we use the handler collection below to pick the right class
-            var allMessageHandlers = producerClassSentMessagesTuples.Keys
-                .Union(consumerClassHandledMessagesTuples.Keys)
+            var allMessageHandlers = messageFlowInformation.MessageProducerInformationCollection.Keys
+                .Union(messageFlowInformation.MessageConsumerInformationCollection.Keys)
                 .Distinct(new MessageHandlerDefinition.MessageHandlerClassComparer())
                 .ToArray();
             
-            foreach (var producerClassSentMessagesTuple in producerClassSentMessagesTuples)
+            foreach (var producerClassSentMessagesTuple in messageFlowInformation.MessageProducerInformationCollection)
             {
                 var producerClassInstance = allMessageHandlers.First(handler => handler.Equals(producerClassSentMessagesTuple.Key));
 
@@ -60,7 +43,7 @@ namespace MassTransitCommVisualizer
                 foreach (var sentMessageType in sentMessageTypes)
                 {
                     var consumerClassCollection =
-                        LookupMessageConsumerClasses(sentMessageType, consumerClassHandledMessagesTuples);
+                        LookupMessageConsumerClasses(sentMessageType, messageFlowInformation.MessageConsumerInformationCollection);
                     foreach (var consumerClass in consumerClassCollection)
                     {
                         var consumerClassInstance = allMessageHandlers.First(handler => handler.Equals(consumerClass));
@@ -75,17 +58,10 @@ namespace MassTransitCommVisualizer
 
         private MessageFlowInformation Map(MessageFlowSymbols messageFlowSymbols)
         {
-            var messagePublisherInfoCollection = ExtractInformationFromSymbols(messageFlowSymbols.MessagePublisherSymbolCollection);
-            var messageResponderSymbolCollection = ExtractInformationFromSymbols(messageFlowSymbols.MessageResponderSymbolCollection);
-            var messageSenderSymbolCollection = ExtractInformationFromSymbols(messageFlowSymbols.MessageSenderSymbolCollection);
-            var responseSenderSymbolCollection = ExtractInformationFromSymbols(messageFlowSymbols.ResponseSenderSymbolCollection);
+            var messageProducerInformationCollection = ExtractInformationFromSymbols(messageFlowSymbols.MessageProducerSymbolCollection);
+            var messageConsumerInformationCollection = ExtractInformationFromSymbols(messageFlowSymbols.MessageConsumerSymbolCollection);
 
-            var consumerImplementationSymbolCollection = ExtractInformationFromSymbols(messageFlowSymbols.ConsumerImplementationSymbolCollection);
-            var responseReceiverSymbolCollection = ExtractInformationFromSymbols(messageFlowSymbols.ResponseReceiverSymbolCollection);
-
-
-            return new MessageFlowInformation(messagePublisherInfoCollection, messageResponderSymbolCollection, messageSenderSymbolCollection,
-                responseSenderSymbolCollection, consumerImplementationSymbolCollection, responseReceiverSymbolCollection);
+            return new MessageFlowInformation(messageProducerInformationCollection, messageConsumerInformationCollection);
         }
 
         private IDictionary<TMessageHandlerType, IEnumerable<TMessageType>>
@@ -125,22 +101,26 @@ namespace MassTransitCommVisualizer
         {
             return dictionary
                 .ToDictionary(keyValue => MapToMessageHandlerDefinition(keyValue.Key), keyValue =>
-                    keyValue.Value.Select(ConvertToMessageDefinition));
+                    keyValue.Value.Select(MapToMessageDefinition));
 
         }
 
-        private MessageDefinition ConvertToMessageDefinition(ITypeSymbol messageTypeSymbol)
+        private MessageDefinition MapToMessageDefinition(ITypeSymbol messageTypeSymbol)
         {
-            return new MessageDefinition(messageTypeSymbol.ToDisplayString());
+            var rawXmlDocument = messageTypeSymbol.GetDocumentationCommentXml();
+            var documentationMetadata = ExtractDocumentationMetadata(rawXmlDocument);
+
+            return new MessageDefinition(messageTypeSymbol.ToDisplayString(), documentationMetadata.Comment);
         }
 
         private MessageHandlerDefinition MapToMessageHandlerDefinition(INamedTypeSymbol messageHandlerTypeSymbol)
         {
             var fullClassName = messageHandlerTypeSymbol.ToDisplayString();
             var moduleName = GetModuleName(fullClassName);
-            var comment = ExtractComment(messageHandlerTypeSymbol.GetDocumentationCommentXml());
+            var rawXmlDocument = messageHandlerTypeSymbol.GetDocumentationCommentXml();
+            var documentationMetadata = ExtractDocumentationMetadata(rawXmlDocument);
 
-            return new MessageHandlerDefinition(fullClassName, moduleName, comment);
+            return new MessageHandlerDefinition(fullClassName, moduleName, documentationMetadata.Comment, documentationMetadata.BusinessProcessEntryPointDescription);
         }
 
         private string GetModuleName(string fullClassName)
@@ -151,19 +131,22 @@ namespace MassTransitCommVisualizer
             return moduleName;
         }
 
-        private string ExtractComment(string rawXmlComment)
+        private (string Comment, string BusinessProcessEntryPointDescription) ExtractDocumentationMetadata(string rawXmlComment)
         {
             if (string.IsNullOrEmpty(rawXmlComment))
             {
-                return string.Empty;
+                return (string.Empty, string.Empty);
             }
 
             var xmlDocument = new XmlDocument();
             xmlDocument.LoadXml(rawXmlComment);
 
             var summaryNode = xmlDocument.SelectSingleNode("member/summary");
+            var comment = summaryNode?.InnerText.Trim();
+            var businessProcessEntryPointDescriptionNode = xmlDocument.SelectSingleNode("member/businessProcessEntryPointDescription");
+            var businessProcessEntryPointDescription = businessProcessEntryPointDescriptionNode?.InnerText.Trim();
 
-            return summaryNode?.InnerText.Trim();
+            return (comment, businessProcessEntryPointDescription);
         }
     }
 }
