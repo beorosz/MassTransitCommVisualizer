@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
+using System.Xml.Linq;
+using System.Xml.XPath;
 using MassTransitCommVisualizer.Model;
 using Microsoft.CodeAnalysis;
 using QuikGraph;
@@ -139,11 +141,10 @@ namespace MassTransitCommVisualizer
             }
 
             var xmlDocument = new XmlDocument();
-            xmlDocument.LoadXml(rawXmlComment);
-
-            var summaryNode = xmlDocument.SelectSingleNode("member/summary");
+            xmlDocument.LoadXml("<root>" + rawXmlComment + "</root>");
+            var summaryNode = xmlDocument.SelectSingleNode("root/member/summary");
             var comment = summaryNode?.InnerText.Trim();
-            var businessProcessEntryPointDescriptionNode = xmlDocument.SelectSingleNode("member/businessProcessEntryPointDescription");
+            var businessProcessEntryPointDescriptionNode = xmlDocument.SelectSingleNode("root/member/businessProcessEntryPointDescription");
             var businessProcessEntryPointDescription = businessProcessEntryPointDescriptionNode?.InnerText.Trim();
 
             return (comment, businessProcessEntryPointDescription);
