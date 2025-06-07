@@ -65,6 +65,7 @@ namespace MassTransitCommVisualizer
             var serviceCollection = new ServiceCollection();
 
             serviceCollection.AddSingleton<IApp, App>();
+            serviceCollection.AddSingleton<IVisualStudioInstanceFinder, VisualStudioInstanceFinder>();
             serviceCollection.AddSingleton<ISymbolFinder, SymbolFinder>();
             serviceCollection.AddSingleton<IMessageFlowSymbolCollector, MessageFlowSymbolCollector>();
             serviceCollection.AddSingleton<IMessageFlowSymbolConverter, MessageFlowSymbolConverter>();

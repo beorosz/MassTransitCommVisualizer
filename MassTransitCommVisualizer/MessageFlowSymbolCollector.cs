@@ -26,11 +26,6 @@ namespace MassTransitCommVisualizer
 
         public async Task<MessageFlowSymbols> Collect(string solutionFilePath)
         {
-            Console.WriteLine("Looking for Visual Studio instance with major version 16 (VS2019)...");
-            var visualStudioInstances = MSBuildLocator.QueryVisualStudioInstances().ToArray();
-            var instance = visualStudioInstances.First(vsInstance => vsInstance.Version.Major == 16);
-            MSBuildLocator.RegisterInstance(instance);
-            Console.WriteLine($"Instance '{instance.Name}' found and registered.");
             var workspace = MSBuildWorkspace.Create();
             workspace.WorkspaceFailed += Workspace_WorkspaceFailed;
 
@@ -57,7 +52,7 @@ namespace MassTransitCommVisualizer
             var publishMethodSymbols = symbolFinder.GetMethodSymbols(projectCompilations,
                 "MassTransit.IPublishEndpoint", "Publish", 1, 2);
             var messagePublisherSymbols = await symbolFinder.FindMethodCallers(solution, publishMethodSymbols, 1, 1);
-
+            
             var publishExtensionMethodSymbols = symbolFinder.GetMethodSymbols(projectCompilations,
                 "MassTransit.PublishContextExecuteExtensions", "Publish", 1, 4);
             var messageExtensionPublisherSymbols =
@@ -75,7 +70,7 @@ namespace MassTransitCommVisualizer
             var messageProducerSymbolCollection = MergeDictionaries(
                     new[]
                     {
-                        messagePublisherSymbols,
+                        messagePublisherSymbols,                        
                         messageExtensionPublisherSymbols,
                         messageResponderSymbols,
                         messageSenderSymbols,

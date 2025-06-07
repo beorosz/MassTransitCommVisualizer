@@ -137,6 +137,11 @@ namespace MassTransitCommVisualizer
         {
             var lastDotIndex = fullName.LastIndexOf('.');
 
+            if (lastDotIndex == -1)
+            {
+                return (fullName, fullName);
+            }
+
             return (fullName.Substring(0, lastDotIndex), fullName.Substring(lastDotIndex + 1));
         }
 

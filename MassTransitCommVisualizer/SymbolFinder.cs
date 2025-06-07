@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Drawing.Text;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -10,7 +12,7 @@ namespace MassTransitCommVisualizer
     {
         ImmutableArray<IMethodSymbol> GetMethodSymbols(ImmutableHashSet<Compilation> projectCompilations,
             string typeName, string methodName, byte methodArity = default, byte methodParameterCount = default);
-        
+
         INamedTypeSymbol GetTypeSymbol(ImmutableHashSet<Compilation> projectCompilations, string typeName);
 
         Task<Dictionary<INamedTypeSymbol, IEnumerable<ITypeSymbol>>> FindMethodCallers
@@ -23,7 +25,7 @@ namespace MassTransitCommVisualizer
 
     public class SymbolFinder : ISymbolFinder
     {
-        public ImmutableArray<IMethodSymbol> GetMethodSymbols(ImmutableHashSet<Compilation> projectCompilations, 
+        public ImmutableArray<IMethodSymbol> GetMethodSymbols(ImmutableHashSet<Compilation> projectCompilations,
             string typeName, string methodName, byte methodArity, byte methodParameterCount)
         {
             foreach (var compilation in projectCompilations)
@@ -33,15 +35,37 @@ namespace MassTransitCommVisualizer
                     .Select(assemblySymbol => assemblySymbol.GetTypeByMetadataName(typeName))
                     .FirstOrDefault(symbol => symbol != null);
 
-                if (typeSymbol != null)
-                    return typeSymbol.GetMembers(methodName)
-                        .OfType<IMethodSymbol>()
-                        .Where(methodSymbol => methodSymbol.Arity == methodArity)
-                        .Where(methodSymbol => methodParameterCount == default || methodSymbol.Parameters.Length == methodParameterCount)
-                        .ToImmutableArray();
+                if (typeSymbol == null) continue;
+
+                var methodSymbolsForGivenName = GetBaseTypeMethodsWithName(typeSymbol, methodName, methodArity, methodParameterCount);
+
+                return methodSymbolsForGivenName
+                    .ToImmutableArray();
             }
 
             return ImmutableArray<IMethodSymbol>.Empty;
+        }
+
+        private IEnumerable<IMethodSymbol> GetBaseTypeMethodsWithName(INamedTypeSymbol typeSymbol, string methodName, byte methodArity, byte methodParameterCount)
+        {
+            List<IMethodSymbol> methodSymbols = new List<IMethodSymbol>();
+
+            methodSymbols.AddRange(typeSymbol.GetMembers(methodName)
+                .OfType<IMethodSymbol>()
+                .Where(methodSymbol => methodSymbol.Arity == methodArity)
+                .Where(methodSymbol => methodParameterCount == default || methodSymbol.Parameters.Length == methodParameterCount));
+
+            if (typeSymbol.BaseType != null)
+            {
+                methodSymbols.AddRange(GetBaseTypeMethodsWithName(typeSymbol.BaseType, methodName, methodArity, methodParameterCount));
+            }
+
+            foreach (var baseInterfaceSymbol in typeSymbol.AllInterfaces)
+            {
+                methodSymbols.AddRange(GetBaseTypeMethodsWithName(baseInterfaceSymbol, methodName, methodArity, methodParameterCount));
+            }
+
+            return methodSymbols.AsEnumerable();
         }
 
         public INamedTypeSymbol GetTypeSymbol(ImmutableHashSet<Compilation> projectCompilations, string typeName)
@@ -76,7 +100,7 @@ namespace MassTransitCommVisualizer
                         // Projects with multiple target frameworks appear multiple times in the solution
                         // Therefore the method symbol is found multiple times, but at the same location
                         // Such excessive calls must be filtered out
-                        if (processedLocations.Any(procLoc => 
+                        if (processedLocations.Any(procLoc =>
                             procLoc.SourceTree.FilePath == location.SourceTree.FilePath && procLoc.SourceSpan == location.SourceSpan))
                         {
                             continue;
@@ -89,7 +113,7 @@ namespace MassTransitCommVisualizer
                             var methodCallerSymbolInfo = methodCallerSemanticModel.GetSymbolInfo(node);
                             if (methodCallerSymbolInfo.Symbol is IMethodSymbol calledMethod && calledMethod.TypeArguments.Length == methodParameterCount)
                             {
-                                var messagePayloadType = new List<ITypeSymbol> { calledMethod.TypeArguments[orderOfTypeArgumentToRetrieve-1] };
+                                var messagePayloadType = new List<ITypeSymbol> { calledMethod.TypeArguments[orderOfTypeArgumentToRetrieve - 1] };
                                 methodCallerTypeWithMethodParamTypesTuples[directMethodCaller.CallingSymbol.ContainingType] =
                                     messagePayloadType.Union(GetValueOrDefault(methodCallerTypeWithMethodParamTypesTuples, directMethodCaller.CallingSymbol.ContainingType)).ToArray();
                             }

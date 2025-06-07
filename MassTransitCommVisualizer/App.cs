@@ -16,14 +16,16 @@ namespace MassTransitCommVisualizer
 
     public class App : IApp
     {
+        private readonly IVisualStudioInstanceFinder visualStudioInstanceFinder;
         private readonly IGraphvizDotDiagramGenerator graphvizDotDiagramGenerator;
         private readonly IMessageFlowSymbolCollector messageFlowSymbolCollector;
         private readonly IMessageFlowSymbolConverter messageFlowSymbolConverter;
-        private readonly IGraphWalkerAlgorithms graphWalkerAlgorithms;
+        private readonly IGraphWalkerAlgorithms graphWalkerAlgorithms;        
 
-        public App(IGraphvizDotDiagramGenerator graphvizDotDiagramGenerator, IMessageFlowSymbolCollector messageFlowSymbolCollector,
-            IMessageFlowSymbolConverter messageFlowSymbolConverter, IGraphWalkerAlgorithms graphWalkerAlgorithms)
+        public App(IVisualStudioInstanceFinder visualStudioInstanceFinder, IGraphvizDotDiagramGenerator graphvizDotDiagramGenerator, 
+            IMessageFlowSymbolCollector messageFlowSymbolCollector, IMessageFlowSymbolConverter messageFlowSymbolConverter, IGraphWalkerAlgorithms graphWalkerAlgorithms)
         {
+            this.visualStudioInstanceFinder = visualStudioInstanceFinder;
             this.graphvizDotDiagramGenerator = graphvizDotDiagramGenerator;
             this.messageFlowSymbolCollector = messageFlowSymbolCollector;
             this.messageFlowSymbolConverter = messageFlowSymbolConverter;
@@ -38,6 +40,7 @@ namespace MassTransitCommVisualizer
 
                 if (!string.IsNullOrEmpty(solutionFilePath))
                 {
+                    visualStudioInstanceFinder.RegisterInstalledVisualStudioInstance();
                     var messageFlowSymbols = await messageFlowSymbolCollector.Collect(solutionFilePath);
 
                     Console.WriteLine("Converting and writing message flow into file...");
