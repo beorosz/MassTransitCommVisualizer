@@ -13,7 +13,7 @@ namespace MassTransitCommVisualizer
 
     public class GraphvizDotDiagramGenerator : IGraphvizDotDiagramGenerator
     {
-        private List<string> etrModulesList;
+        private List<string> modulesList;
 
         private Color[] colorsForModules = {
             Color.LightBlue,
@@ -30,12 +30,12 @@ namespace MassTransitCommVisualizer
 
         public GraphvizDotDiagramGenerator()
         {
-            etrModulesList = new List<string>();
+            modulesList = new List<string>();
         }
 
         public string Generate(MessageFlowGraph graph, MessageHandlerDefinition vertexForHighlight)
         {
-            etrModulesList = CollectModuleNames(graph.Vertices);
+            modulesList = CollectModuleNames(graph.Vertices);
 
             var dotDiagram = new StringBuilder();
             AppendMainGraphDefinitionStart(dotDiagram);
@@ -147,7 +147,7 @@ namespace MassTransitCommVisualizer
 
         private Color GetNamespaceColor(MessageHandlerDefinition messageHandlerClass)
         {
-            var moduleIndex = etrModulesList.FindIndex(name => name == messageHandlerClass.ModuleName);
+            var moduleIndex = modulesList.FindIndex(name => name == messageHandlerClass.ModuleName);
 
             return moduleIndex == -1 ? Color.Red : colorsForModules[moduleIndex % colorsForModules.Length];
         }
